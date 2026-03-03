@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汐奎建設 | XIKUI - 建築如潮汐，奎星如永恆</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --white: #ffffff;
+            --dark: #050505;
+            --gray-text: rgba(255, 255, 255, 0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Noto Sans TC', sans-serif; }
+
+        body {
+            background-color: var(--dark);
+            color: var(--white);
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        /* --- 1. 入場遮罩 --- */
+        #intro-loader {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            background-color: #000;
+            display: flex;
+            justify-content: center; align-items: center;
+            z-index: 10000;
+        }
+        .loader-logo { width: 400px; opacity: 0; transform: scale(0.9); filter: brightness(0) invert(1); }
+
+        /* --- 2. 3D 背景畫布 --- */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- 3. 游標果凍圖片 (層級最高) --- */
+        #floating-thumb {
+            position: fixed;
+            top: 0; left: 0;
+            width: 420px;
+            height: 270px;
+            pointer-events: none;
+            z-index: 99999;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0);
+            overflow: hidden;
+            border-radius: 4px;
+            box-shadow: 0 50px 100px rgba(0,0,0,1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background-color: #111;
+            will-change: transform, opacity;
+        }
+        .thumbnail-img { 
+            width: 100%; height: 100%; 
+            background-size: cover; 
+            background-position: center; 
+            position: absolute;
+            will-change: opacity, transform;
+        }
+
+        /* --- 4. 導覽列 (Logo 85px) --- */
+        #main-nav {
+            position: fixed;
+            top: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 30px 60px;
+            z-index: 1000;
+        }
+        .logo-main img { height: 85px; width: auto; filter: brightness(0) invert(1); }
+        .nav-links { display: flex; list-style: none; }
+        .nav-links li { margin-left: 45px; }
+        .nav-links a { text-decoration: none; color: var(--gray-text); font-weight: 300; letter-spacing: 3px; font-size: 1rem; transition: 0.3s; }
+        .nav-links a:hover { color: var(--white); text-shadow: 0 0 15px white; }
+
+        /* --- 5. 內容外殼 --- */
+        #main-wrapper { width: 100%; height: 100vh; will-change: transform; }
+
+        .section {
+            width: 100%; height: 100vh;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            position: relative; overflow: hidden;
+        }
+
+        /* --- 6. 發光標題邏輯 --- */
+        .row-glow-area { width: 100%; cursor: pointer; text-decoration: none !important; color: inherit !important; display: block; }
+        .glow-target {
+            color: var(--gray-text);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .row-glow-area:hover .glow-target {
+            color: var(--white) !important;
+            text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 60px rgba(255,255,255,0.2) !important;
+        }
+
+        #glow-title { font-size: 6.5rem; font-weight: 100; letter-spacing: 25px; margin-bottom: 30px; color: white; opacity: 0; }
+        #hero-slogan {
+            font-size: 1.4rem; letter-spacing: 12px; font-weight: 300;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+            background-size: 200% 100%; background-repeat: no-repeat;
+            -webkit-background-clip: text; display: inline-block; color: rgba(255,255,255,0.3); opacity: 0;
+        }
+
+        /* --- 7. 建築作品 (修正佈局與圖片) --- */
+        .works-section { align-items: flex-start; padding-left: 10%; }
+        .horizontalWrap { display: flex; align-items: center; height: 100%; will-change: transform; }
+        .pageSectionTitle { margin-right: 120px; flex-shrink: 0; width: 450px; }
+        .pageSectionTitle h2 { font-size: 4rem; font-weight: 300; letter-spacing: 5px; line-height: 1.1; color: white; }
+        
+        .horizontalList { display: flex; gap: 80px; padding-right: 30vw; }
+        .horizontalItem { width: 32vw; flex-shrink: 0; }
+        .thumbnailEffect { 
+            width: 100%; aspect-ratio: 16/10; overflow: hidden; 
+            border: 1px solid rgba(255,255,255,0.15); 
+            background-color: #111;
+        }
+        .thumbnail { width: 100%; height: 100%; background-size: cover; background-position: center; transition: 1.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .horizontalItem:hover .thumbnail { transform: scale(1.1); }
+        
+        .item-info h5 { font-size: 1.4rem; font-weight: 400; margin-top: 20px; color: white; }
+        .item-info p { font-size: 0.9rem; color: var(--gray-text); margin-top: 12px; line-height: 1.8; white-space: normal; }
+
+        /* --- 8. 最新消息 --- */
+        .news-section { align-items: flex-start; padding: 0 10%; }
+        .news-header { margin-bottom: 40px; }
+        .news-header h2 { font-size: 3.5rem; font-weight: 300; letter-spacing: 6px; }
+
+        .news-list { border-top: 1px solid rgba(255,255,255,0.1); width: 100%; }
+        .news-item { display: block; text-decoration: none; color: white; padding: 30px 0; border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; }
+        .news-date { font-size: 0.8rem; color: var(--white); margin-bottom: 8px; display: block; opacity: 0.3; }
+        .news-title { font-size: 1.6rem; font-weight: 300; line-height: 1.4; width: 85%; transition: 0.5s; }
+
+        /* --- 9. 汐奎介紹 --- */
+        .about-section { align-items: flex-start; padding: 0 10%; }
+        .about-title { font-size: 6rem; font-weight: 500; letter-spacing: 5px; line-height: 1; margin-bottom: 20px; }
+        .about-link-text { font-size: 1.4rem; font-weight: bold; display: flex; align-items: center; letter-spacing: 5px; margin-top: 30px; }
+        .arrow-icon { margin-left: 20px; width: 30px; height: 30px; transition: transform 0.4s; fill: currentColor; }
+        .row-glow-area:hover .arrow-icon { transform: translateX(20px); }
+
+        footer { position: absolute; bottom: 30px; left: 10%; opacity: 0.15; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+    <div id="floating-thumb"><div class="thumbnail-img" id="thumb-bg"></div></div>
+
+    <div id="intro-loader">
+        <img src="https://media.discordapp.net/attachments/1267372933001510975/1457132457756196916/-_2026-01-04T060200.237.png?ex=695ae3da&is=6959925a&hm=2204faff238260ad79940d2312f231e7b97e28f826ff9f522dbc932b67251a9f&=&format=webp&quality=lossless&width=1368&height=770" class="loader-logo">
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <nav id="main-nav">
+        <div class="logo-main">
+            <img src="https://media.discordapp.net/attachments/1267372933001510975/1457132457756196916/-_2026-01-04T060200.237.png?ex=695ae3da&is=6959925a&hm=2204faff238260ad79940d2312f231e7b97e28f826ff9f522dbc932b67251a9f&=&format=webp&quality=lossless&width=1368&height=770">
+        </div>
+        <ul class="nav-links">
+            <li><a href="#">最新公告</a></li>
+            <li><a href="#">建築作品</a></li>
+            <li><a href="#">聯絡汐奎</a></li>
+        </ul>
+    </nav>
+
+    <div id="main-wrapper">
+        <!-- 階段 0 -->
+        <section class="section hero" id="section-hero">
+            <div class="row-glow-area" style="text-align:center;">
+                <h1 id="glow-title" class="glow-target">汐奎建設</h1>
+                <p id="hero-slogan" class="glow-target">建築如潮汐般永續，如奎星般宏偉</p>
+            </div>
+        </section>
+
+        <!-- 階段 1 -->
+        <section class="section works-section" id="section-works">
+            <div class="horizontalWrap" id="h-wrap">
+                <div class="pageSectionTitle row-glow-area">
+                    <h2 class="glow-target">Architectural<br>Works</h2>
+                    <h3 class="glow-target" style="opacity: 0.3; margin-top: 10px; letter-spacing: 3px;">建築作品</h3>
+                </div>
+                <div class="horizontalList">
+                    <div class="horizontalItem">
+                        <div class="thumbnailEffect"><div class="thumbnail" style="background-image:url(https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1200)"></div></div>
+                        <div class="item-info"><h5>汐奎 ‧ 天賦</h5><p>融合極簡主義與自然地景，打造與光影共生的現代邸宅。</p></div>
+                    </div>
+                    <div class="horizontalItem">
+                        <div class="thumbnailEffect"><div class="thumbnail" style="background-image:url(https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1200)"></div></div>
+                        <div class="item-info"><h5>汐奎 ‧ 雲鏡</h5><p>透過數位設計精確落實，實現 3D 列印複合式建築。</p></div>
+                    </div>
+                    <div class="horizontalItem">
+                        <div class="thumbnailEffect"><div class="thumbnail" style="background-image:url(https://images.unsplash.com/photo-1613490493576-7fde63acd811?q=80&w=1200)"></div></div>
+                        <div class="item-info"><h5>汐奎 ‧ 御林</h5><p>城市中心的隱密綠洲，定義未來住宅的永續標準。</p></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 階段 2 -->
+        <section class="section news-section" id="section-news">
+            <div class="news-header row-glow-area">
+                <h2 class="glow-target">Latest News</h2>
+                <h3 class="glow-target" style="opacity: 0.2; letter-spacing: 3px; margin-top: 10px;">最新消息</h3>
+            </div>
+            <div class="news-list" id="news-container">
+                <a href="#" class="news-item row-glow-area" data-img="https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=1200"><span class="news-date">2026 / 01 / 04</span><div class="news-title glow-target">以數位維度構築實體美學！汐奎講堂正式啟用</div></a>
+                <a href="#" class="news-item row-glow-area" data-img="https://images.unsplash.com/photo-1600566752355-35792bedcfea?q=80&w=1200"><span class="news-date">2025 / 12 / 18</span><div class="news-title glow-target">永續建築先鋒：汐奎建設榮獲國際綠色設計金獎</div></a>
+                <a href="#" class="news-item row-glow-area" data-img="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?q=80&w=1200"><span class="news-date">2025 / 11 / 22</span><div class="news-title glow-target">奎星綻放！全台首座 3D 列印住宅「汐奎 ‧ 雲鏡」正式公開</div></a>
+                <a href="#" class="news-item row-glow-area" data-img="https://images.unsplash.com/photo-1600585154526-990dced4db0d?q=80&w=1200"><span class="news-date">2025 / 10 / 05</span><div class="news-title glow-target">跨越不惑與而立：汐奎建築三十五週年紀念特展</div></a>
+                <a href="#" class="news-item row-glow-area" data-img="https://images.unsplash.com/photo-1448630360428-65456885c650?q=80&w=1200"><span class="news-date">2025 / 09 / 12</span><div class="news-title glow-target">打造城市森林：與國際建築大師聯手開發永續計畫</div></a>
+            </div>
+        </section>
+
+        <!-- 階段 3 -->
+        <section class="section about-section" id="section-about">
+            <a href="#" class="row-glow-area">
+                <div style="margin-bottom: 10px; font-size: 1rem; font-weight: bold; opacity: 0.6;" class="glow-target">NEXT</div>
+                <div class="about-title glow-target">ABOUT<br>US</div>
+                <div class="about-link-text glow-target">
+                    汐奎介紹 
+                    <svg class="arrow-icon" viewBox="0 0 448 512"><path d="M438.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-160-160c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L338.8 224 32 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l306.7 0L233.4 393.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l160-160z"></path></svg>
+                </div>
+            </a>
+            <footer>&copy; 2026 XIKUI CONSTRUCTION GROUP.</footer>
+        </section>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
+
+    <script>
+        gsap.registerPlugin(Observer);
+
+        // --- 1. Three.js 背景 ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+        const buildings = new THREE.Group();
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.1 });
+        for(let i=0; i<42; i++){
+            const h=Math.random()*10+2, w=Math.random()*3+1;
+            const line = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,h,w)), lineMat);
+            line.position.set((Math.random()-0.5)*50, h/2-5, (Math.random()-0.5)*40);
+            buildings.add(line);
+        }
+        scene.add(buildings); camera.position.z = 22;
+
+        // --- 2. 座標追蹤與 3D 互動 ---
+        const thumb = document.getElementById('floating-thumb');
+        const thumbBg = document.getElementById('thumb-bg');
+        const nav = document.getElementById('main-nav');
+        const wrapper = document.getElementById('main-wrapper');
+        const hWrap = document.getElementById('h-wrap');
+        const title = document.getElementById('glow-title');
+        const slogan = document.getElementById('hero-slogan');
+
+        window.addEventListener('mousemove', (e) => {
+            gsap.to(thumb, { x: e.clientX, y: e.clientY, duration: 0.35, ease: "power2.out" });
+            gsap.to(buildings.rotation, { 
+                y: (e.clientX/window.innerWidth-0.5)*0.3, 
+                x: (e.clientY/window.innerHeight-0.5)*0.1, 
+                duration: 1.5 
+            });
+        });
+
+        // --- 3. 四段式吸附捲動邏輯 ---
+        let mainIdx = 0; let hIdx = 0; let isAnimating = false;
+
+        function updateElements(idx) {
+            if (idx === 0) {
+                gsap.to(nav, { opacity: 1, y: 0, duration: 0.8 });
+                gsap.to([title, slogan], { opacity: 1, y: 0, duration: 0.8, stagger: 0.1 });
+            } else {
+                gsap.to(nav, { opacity: 0, y: -20, duration: 0.6 });
+                gsap.to([title, slogan], { opacity: 0, y: -50, duration: 0.6, stagger: 0.1 });
+            }
+        }
+
+        function scrollMain(idx) {
+            if (isAnimating || idx < 0 || idx > 3) return; 
+            isAnimating = true; mainIdx = idx; updateElements(idx);
+            gsap.to(wrapper, { y: -idx * 100 + "vh", duration: 1.4, ease: "power4.inOut", onComplete: () => isAnimating = false });
+        }
+
+        function scrollHorizontal(idx) {
+            if (isAnimating) return; isAnimating = true; hIdx = idx;
+            // 修正位移量
+            gsap.to(hWrap, { x: -idx * 38 + "vw", duration: 1.2, ease: "power3.inOut", onComplete: () => isAnimating = false });
+        }
+
+        Observer.create({
+            type: "wheel,touch,pointer",
+            wheelSpeed: -1,
+            onUp: () => {
+                if (isAnimating) return;
+                if (mainIdx === 0) scrollMain(1);
+                else if (mainIdx === 1) { if (hIdx < 2) scrollHorizontal(hIdx + 1); else scrollMain(2); }
+                else if (mainIdx === 2) scrollMain(3);
+            },
+            onDown: () => {
+                if (isAnimating) return;
+                if (mainIdx === 3) scrollMain(2);
+                else if (mainIdx === 2) { scrollMain(1); hIdx = 2; gsap.set(hWrap, { x: "-76vw" }); }
+                else if (mainIdx === 1) { if (hIdx > 0) scrollHorizontal(hIdx - 1); else scrollMain(0); }
+            },
+            tolerance: 20, preventDefault: true
+        });
+
+        // --- 4. 入場動畫 ---
+        gsap.timeline()
+            .to(".loader-logo", { opacity: 1, scale: 1, duration: 1.2 })
+            .to(".loader-logo", { opacity: 0, duration: 0.8, delay: 0.5 })
+            .to("#intro-loader", { y: "-100%", duration: 1, ease: "expo.inOut" })
+            .to(title, { opacity: 1, y: 0, duration: 1.2, ease: "power3.out" })
+            .to(slogan, { 
+                opacity: 1, y: 0, duration: 1.2, ease: "power3.out",
+                onComplete: () => { gsap.to("#hero-slogan", { backgroundPosition: "200% 0", duration: 3, repeat: -1, ease: "linear" }); }
+            }, "-=0.8");
+
+        // --- 5. 最新消息：公告圖片切換修復 (超果凍邏輯) ---
+        let currentImg = "";
+        const hideThumb = () => {
+            gsap.to(thumb, { opacity: 0, scale: 0, duration: 0.4, ease: "back.in(1.7)", overwrite: true });
+            currentImg = "";
+        };
+
+        document.querySelectorAll('.news-item').forEach(item => {
+            item.addEventListener('mouseenter', () => {
+                const img = item.getAttribute('data-img');
+                
+                // 強力修復：第一時間殺死所有縮放動畫
+                gsap.killTweensOf(thumb);
+                gsap.killTweensOf(thumbBg);
+                
+                if (currentImg === "") {
+                    // 初次展開
+                    thumbBg.style.backgroundImage = `url(${img})`;
+                    gsap.set(thumb, { scale: 0, opacity: 0 }); // 重置
+                    gsap.to(thumb, { 
+                        opacity: 1, 
+                        scale: 1, 
+                        duration: 0.8, 
+                        ease: "elastic.out(1.2, 0.4)", // 果凍彈性
+                        overwrite: true 
+                    });
+                } else if (currentImg !== img) {
+                    // 切換漸顯
+                    gsap.timeline()
+                        .to(thumbBg, { opacity: 0, scale: 0.9, duration: 0.15, ease: "power2.in" })
+                        .set(thumbBg, { backgroundImage: `url(${img})` })
+                        .to(thumbBg, { opacity: 1, scale: 1, duration: 0.25, ease: "power2.out" });
+                    
+                    // 容器抖動
+                    gsap.to(thumb, { rotation: Math.random()*12-6, duration: 0.4 });
+                }
+                currentImg = img;
+            });
+        });
+        document.getElementById('news-container').addEventListener('mouseleave', hideThumb);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight; camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
+        animate();
+    // 在 index.html 的 script 底部加入
+document.querySelector('#section-about a').addEventListener('click', function(e) {
+    e.preventDefault(); // 暫時阻止跳轉
+    const href = this.getAttribute('href');
+    
+    // 執行出場動畫：黑色幕簾蓋過螢幕
+    const curtain = document.createElement('div');
+    curtain.style.position = 'fixed';
+    curtain.style.bottom = '-100%';
+    curtain.style.left = '0';
+    curtain.style.width = '100%';
+    curtain.style.height = '100%';
+    curtain.style.backgroundColor = '#000';
+    curtain.style.zIndex = '100000';
+    document.body.appendChild(curtain);
+
+    gsap.to(curtain, {
+        bottom: '0%',
+        duration: 0.8,
+        ease: "power4.inOut",
+        onComplete: () => {
+            window.location.href = "about.html"; // 動畫完才跳轉
+        }
+    });
+});
+    </script>
+</body>
+</html>

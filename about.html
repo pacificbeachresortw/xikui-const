@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>關於汐奎 | ABOUT XIKUI - 建築如潮汐，奎星如永恆</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100;300;400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --white: #ffffff;
+            --dark: #050505;
+            --gray-text: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Noto Sans TC', sans-serif; }
+
+        body {
+            background-color: var(--dark);
+            color: var(--white);
+            overflow: hidden; /* 強制禁用原生捲動 */
+            touch-action: none;
+        }
+
+        /* --- 1. 入場轉場幕簾 --- */
+        #transition-curtain {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            background-color: #000;
+            z-index: 10000;
+            transform: translateY(0);
+        }
+
+        /* --- 2. 3D 星空背景 --- */
+        #canvas-container {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* --- 3. 導覽列 --- */
+        #main-nav {
+            position: fixed;
+            top: 0; width: 100%;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 30px 60px;
+            z-index: 1000;
+        }
+        .logo-main img { height: 75px; width: auto; filter: brightness(0) invert(1); cursor: pointer; }
+        .nav-links { display: flex; list-style: none; }
+        .nav-links li { margin-left: 45px; }
+        .nav-links a { text-decoration: none; color: var(--gray-text); font-weight: 300; letter-spacing: 3px; font-size: 1rem; transition: 0.3s; }
+        .nav-links a:hover { color: var(--white); text-shadow: 0 0 10px white; }
+
+        /* --- 4. 內容包裝容器 --- */
+        #main-wrapper {
+            width: 100%;
+            height: 100vh;
+            will-change: transform;
+        }
+
+        .section {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            padding: 0 15%;
+        }
+
+        /* --- 第一屏: About Us + 懸浮 Logo --- */
+        .hero-container {
+            display: flex;
+            align-items: center;
+            gap: 60px;
+        }
+
+        .about-title-wrap {
+            text-align: left;
+        }
+
+        .about-title-wrap h1 {
+            font-size: 7rem;
+            font-weight: 100;
+            letter-spacing: 20px;
+            line-height: 1;
+            margin-bottom: 20px;
+        }
+
+        .about-title-wrap p {
+            font-size: 1.2rem;
+            letter-spacing: 8px;
+            color: var(--gray-text);
+        }
+
+        /* 汐奎懸浮 Logo */
+        .floating-logo-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .floating-logo {
+            width: 100%;
+            height: auto;
+            filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.2));
+            transition: filter 0.5s ease, transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        /* 鼠標上去會更亮 */
+        .floating-logo:hover {
+            filter: drop-shadow(0 0 50px rgba(255, 255, 255, 0.8)) brightness(1.2);
+            transform: scale(1.05);
+        }
+
+        /* --- 第二屏: 品牌初衷 --- */
+        .content-box {
+            max-width: 800px;
+            text-align: center;
+        }
+        .content-box h2 {
+            font-size: 3rem;
+            font-weight: 300;
+            letter-spacing: 10px;
+            margin-bottom: 50px;
+        }
+        .content-box p {
+            font-size: 1.25rem;
+            line-height: 2.2;
+            color: rgba(255,255,255,0.7);
+            font-weight: 300;
+            text-align: justify;
+        }
+
+        footer {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            opacity: 0.15;
+            font-size: 0.8rem;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 跨頁轉場幕簾 -->
+    <div id="transition-curtain"></div>
+
+    <!-- 3D 星空背景 -->
+    <div id="canvas-container"></div>
+
+    <nav id="main-nav">
+        <div class="logo-main" onclick="location.href='index.html'">
+            <img src="https://media.discordapp.net/attachments/1267372933001510975/1457132457756196916/-_2026-01-04T060200.237.png?ex=695ae3da&is=6959925a&hm=2204faff238260ad79940d2312f231e7b97e28f826ff9f522dbc932b67251a9f&=&format=webp&quality=lossless&width=1368&height=770">
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">返回首頁</a></li>
+        </ul>
+    </nav>
+
+    <!-- 內容主容器 -->
+    <div id="main-wrapper">
+        
+        <!-- 第一屏 -->
+        <section class="section">
+            <div class="hero-container">
+                <div class="about-title-wrap">
+                    <p>SINCE 2026</p>
+                    <h1>ABOUT<br>US</h1>
+                    <p>汐奎建設 ‧ 建築與永續的對話</p>
+                </div>
+                <div class="floating-logo-container">
+                    <!-- 您提供的汐奎 Logo 連結 -->
+                    <img src="https://media.discordapp.net/attachments/1267372933001510975/1457551171349778564/8.png?ex=695c69cf&is=695b184f&hm=9277af34b88972d4b526d48be8263966f2b5a82dc88c17bbc4baea6cf85b6585&=&format=webp&quality=lossless&width=842&height=842" 
+                         class="floating-logo" alt="Xikui Logo">
+                </div>
+            </div>
+        </section>
+
+        <!-- 第二屏 -->
+        <section class="section">
+            <div class="content-box">
+                <h2>品牌初衷</h2>
+                <p>
+                    「汐」代表了大地的呼吸與自然的律動，每一波潮汐的往復都是時間的印記；「奎」則取自於代表文章與建築精算的奎宿，象徵著智慧與結構的極致要求。<br><br>
+                    在汐奎建設，我們相信建築不應只是冰冷的鋼筋水泥，而應該是具有生命力的藝術品。透過數位精算與前衛設計，我們構築的每一座建築，都如潮汐般永續，如奎星般在城市中散發恆久的光芒。
+                </p>
+            </div>
+            <footer>&copy; 2026 XIKUI CONSTRUCTION GROUP. ALL RIGHTS RESERVED.</footer>
+        </section>
+
+    </div>
+
+    <!-- 腳本 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Observer.min.js"></script>
+
+    <script>
+        gsap.registerPlugin(Observer);
+
+        // --- 1. Three.js 奎星粒子星空背景 ---
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particlesCount = 3000;
+        const posArray = new Float32Array(particlesCount * 3);
+        for(let i=0; i<particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 15;
+        }
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.005,
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.5
+        });
+        const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particlesMesh);
+        camera.position.z = 5;
+
+        // --- 2. Logo 懸浮與呼吸動畫 ---
+        const logo = document.querySelector('.floating-logo');
+        gsap.to(logo, {
+            y: 30,
+            rotation: 5,
+            duration: 3,
+            repeat: -1,
+            yoyo: true,
+            ease: "power1.inOut"
+        });
+
+        // --- 3. 核心捲動：Slow-Fast-Slow (Power4.inOut) ---
+        const wrapper = document.getElementById('main-wrapper');
+        let currentIdx = 0;
+        let isAnimating = false;
+
+        function scrollSection(idx) {
+            if (isAnimating || idx < 0 || idx > 1) return;
+            isAnimating = true;
+            currentIdx = idx;
+
+            gsap.to(wrapper, {
+                y: -idx * 100 + "vh",
+                duration: 1.4,
+                ease: "power4.inOut",
+                onComplete: () => isAnimating = false
+            });
+        }
+
+        Observer.create({
+            type: "wheel,touch,pointer",
+            wheelSpeed: -1,
+            onDown: () => scrollSection(0),
+            onUp: () => scrollSection(1),
+            tolerance: 15,
+            preventDefault: true
+        });
+
+        // --- 4. 跨頁轉場入場動畫 ---
+        window.addEventListener('load', () => {
+            const tl = gsap.timeline();
+            tl.to("#transition-curtain", {
+                y: "-100%",
+                duration: 1.2,
+                ease: "expo.inOut",
+                delay: 0.3
+            })
+            .from(".hero-container", {
+                opacity: 0,
+                y: 50,
+                duration: 1,
+                ease: "power3.out"
+            }, "-=0.5");
+        });
+
+        // --- 5. 互動特效 ---
+        window.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5);
+            const y = (e.clientY / window.innerHeight - 0.5);
+            // 星空擺動
+            gsap.to(particlesMesh.rotation, { y: x * 0.4, x: y * 0.4, duration: 2 });
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            particlesMesh.rotation.y += 0.0005;
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
